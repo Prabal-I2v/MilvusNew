@@ -1,0 +1,46 @@
+.timeline {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+}
+
+.timeline-item {
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding: 0 10px;
+}
+
+.timeline-item:not(:last-child)::after {
+  content: '';
+  height: 4px;
+  width: 30px;
+  background: #ccc;
+  position: absolute;
+  left: 95%;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.timeline-item.completed .circle {
+  background: #4caf50; /* Completed stage color */
+  border-color: #4caf50;
+}
+
+.timeline-item.completed .label {
+  color: #4caf50;
+}
+
+.circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  background: #fff;
+  margin-right: 5px;
+}
+
+.label {
+  font-weight: bold;
+  color: #333;
+}

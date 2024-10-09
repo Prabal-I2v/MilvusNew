@@ -1,0 +1,148 @@
+.container {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 5%;
+  padding: 20px;
+  margin: auto;
+}
+
+.connection-card {
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.error-message {
+  color: red;
+  margin-top: 10px;
+}
+
+.create-collection-card {
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.global-selection {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.global-selection label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.index-container{
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.action-buttons{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.action-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.card {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+  margin-top: 0;
+  color: #333;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
+
+label {
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+input,
+textarea,
+select {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: calc(100% - 16px);
+  font-size: 14px;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.btn {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn.primary {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.btn.primary:hover {
+  background-color: #0056b3;
+}
+
+.btn.secondary {
+  background-color: #6c757d;
+  color: #fff;
+}
+
+.btn.secondary:hover {
+  background-color: #5a6268;
+}
+
+.btn:hover {
+  background-color: #f0f0f0;
+}
+
+.refresh-btn {
+  background-color: #28a745;
+  color: #fff;
+}
+
+.refresh-btn:hover {
+  background-color: #218838;
+}
+
+.small-loader {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #f3f3f3; /* Light gray */
+  border-top: 2px solid #3498db; /* Blue */
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: 8px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
