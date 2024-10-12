@@ -65,328 +65,365 @@
       <button class="btn refresh-btn" (click)="refreshCollectionStatus()">Refresh Status</button>
     </div>
 
-
-    <!-- Search Data Card -->
-    <div *ngIf="selectedCollectionName && selectedCollectionData" class="card create-collection-card">
-
-      <h2>Search Collection</h2>
-      <form [formGroup]="searchForm" (ngSubmit)="search()">
-        <div class="input-group">
-          <label for="queryVector">Query Vector:</label>
-          <input
-            id="queryVector"
-            formControlName="queryVector"
-            placeholder="Enter vector as comma-separated values"
-          />
-        </div>
-
-        <!-- Query Vector Field -->
-        <div class="input-group">
-          <label for="queryVectorField">Query Vector Field:</label>
-          <input
-            id="queryVectorField"
-            formControlName="queryVectorField"
-            placeholder="Enter query vector field"
-          />
-        </div>
-
-        <!-- Top K -->
-        <div class="input-group">
-          <label for="topK">Top K:</label>
-          <input
-            id="topK"
-            type="number"
-            formControlName="topK"
-            min="1"
-            placeholder="Number of results to return"
-          />
-        </div>
-
-        <!-- Similarity Metric Type -->
-        <div class="input-group">
-          <label for="similarityMetricType">Similarity Metric Type:</label>
-          <select id="similarityMetricType" formControlName="similarityMetricType">
-            <option *ngFor="let metric of similarityMetrics" [value]="metric">{{ metric }}</option>
-          </select>
-        </div>
-
-        <!-- Output Fields (Multi-select) -->
-        <div class="input-group">
-          <label>Select Fields:</label>
-          <p-multiSelect
-            formControlName="outputFields"
-            [options]="allOutputFields"
-            [display]="'chip'"
-            [style]="{ width: '300px' }"
-            [filter]="true"
-            [showToggleAll]="false"
-            placeholder="Select fields"
-          ></p-multiSelect>
-        </div>
-
-        <!-- Nprobe (Optional) -->
-        <div class="input-group">
-          <label for="nprobe">Nprobe (optional):</label>
-          <input
-            id="nprobe"
-            type="number"
-            formControlName="nprobe"
-            placeholder="Enter Nprobe"
-          />
-        </div>
-
-        <!-- Level (Optional) -->
-        <div class="input-group">
-          <label for="level">Level (optional):</label>
-          <input
-            id="level"
-            type="number"
-            formControlName="level"
-            min="1"
-            max="3"
-            placeholder="Enter level (1-3)"
-          />
-        </div>
-
-        <!-- Radius (Optional) -->
-        <div class="input-group">
-          <label for="radius">Radius (optional):</label>
-          <input
-            id="radius"
-            type="number"
-            formControlName="radius"
-            placeholder="Enter search radius"
-          />
-        </div>
-
-        <!-- Range Filter (Optional) -->
-        <div class="input-group">
-          <label for="rangeFilter">Range Filter (optional):</label>
-          <input
-            id="rangeFilter"
-            type="number"
-            formControlName="rangeFilter"
-            placeholder="Enter range filter"
-          />
-        </div>
-
-        <!-- Offset (Optional) -->
-        <div class="input-group">
-          <label for="offset">Offset (optional):</label>
-          <input
-            id="offset"
-            type="number"
-            formControlName="offset"
-            placeholder="Enter offset for pagination"
-          />
-        </div>
-
-        <!-- Submit Button -->
-        <button type="submit" class="btn primary">Search</button>
-      </form>
-
-
-    </div>
-
-    <!-- Index and Load Collection Card -->
-    <div *ngIf="selectedCollectionName && selectedCollectionData" class="card create-collection-card">
-      <h2>Index and Load Collection</h2>
-      <div class="action-buttons">
-        <!-- Create Index Button with Loader -->
-        <div>
-          <label>Indexed columns :</label>
-          <select [(ngModel)]="columnForRemoveIndexing" name="columnName">
-            <option *ngFor="let column of indexedColumns" [value]="column">{{ column }}</option>
-          </select>
-          <div>
-            <button type="submit" class="btn primary" [disabled]="isRemovingIndex" (click)="removeIndex()">
-              Remove Index
-              <span *ngIf="isRemovingIndex" class="small-loader"></span>
-            </button>
-          </div>
-        </div>
-        <div>
-          <form class="index-container" (ngSubmit)="createIndex()">
-            <div>
-              <label>Collection Column Name</label>
-              <select [(ngModel)]="indexCreationParams.columnName" name="columnName">
-                <option *ngFor="let column of columns" [value]="column">{{ column }}</option>
-              </select>
-            </div>
-
-            <div>
-              <label>Index Name</label>
-              <input type="text" [(ngModel)]="indexCreationParams.indexName" name="indexName" required>
-            </div>
-
-            <div>
-              <label>Similarity Metric</label>
-              <select (change)="setMetricType($event)" name="similarityMetricType" required>
-                <option *ngFor="let metric of similarityMetrics" [value]="metric">{{ metric }}</option>
-              </select>
-            </div>
-
-            <div>
-              <label>Index Type</label>
-              <select (change)="setIndexType($event)" name="indexType" required>
-                <option *ngFor="let type of indexTypes" [value]="type">{{ type }}</option>
-              </select>
-            </div>
-
-
-            <div>
-              <label>Nlist</label>
-              <input type="number" [(ngModel)]="indexCreationParams.nlist" name="nlist" required>
-            </div>
-
-            <!-- Optional fields for IVF_PQ -->
-            <ng-template *ngIf="indexCreationParams.indexType === IndexType.IvfPq">
-              <div>
-                <label>M</label>
-                <input type="number" [(ngModel)]="indexCreationParams.m" name="m">
-              </div>
-
-              <div>
-                <label>Nbits</label>
-                <input type="number" [(ngModel)]="indexCreationParams.nbits" name="nbits">
-              </div>
-            </ng-template>
-
-            <!-- Optional fields for HNSW and RHNSW -->
-            <ng-template
-              *ngIf="indexCreationParams.indexType === IndexTypes.Hnsw || indexCreationParams.indexType == IndexType.RhnswPq || indexCreationParams.indexType == IndexType.RhnswFlat || indexCreationParams.indexType == IndexTypes.RhnswSq">
-              <div>
-                <label>M</label>
-                <input type="number" [(ngModel)]="indexCreationParams.M" name="M">
-              </div>
-
-              <div>
-                <label>efConstruction</label>
-                <input type="number" [(ngModel)]="indexCreationParams.efConstruction" name="efConstruction">
-              </div>
-            </ng-template>
-
-            <!-- Optional field for RHNSW_PQ -->
-            <div *ngIf="indexCreationParams.indexType === IndexType.RhnswPq">
-              <label>PQM</label>
-              <input type="number" [(ngModel)]="indexCreationParams.PQM" name="PQM">
-            </div>
-
-            <div>
-              <button type="submit" class="btn primary" [disabled]="isCreatingIndex">
-                Create Index
-                <span *ngIf="isCreatingIndex" class="small-loader"></span>
-              </button>
-            </div>
-          </form>
-        </div>
-        <!-- Load Collection Button with Loader -->
-        <button *ngIf="!collectionStages.IsLoaded" class="btn primary" (click)="loadCollection()"
-                [disabled]="isLoadingCollection">
-          Load Collection
-          <span *ngIf="isLoadingCollection" class="small-loader"></span>
-        </button>
-
-        <!-- Unload Collection Button with Loader -->
-        <button *ngIf="collectionStages.IsLoaded" class="btn primary" (click)="releaseCollection()"
-                [disabled]="isReleasingCollection">
-          UnLoad Collection
-          <span *ngIf="isReleasingCollection" class="small-loader"></span>
-        </button>
-      </div>
-
-    </div>
-
-  </div>
-  <div *ngIf="selectedCollectionName">
-
     <!-- Timeline Component: Visible when a collection is selected -->
     <app-timeline *ngIf="selectedCollectionName" [stages]="collectionStages"></app-timeline>
-
-    <!-- Action Cards: Visible when a collection is selected -->
-    <div *ngIf="selectedCollectionName && selectedCollectionData" class="action-cards">
-      <!-- Insert Data Card -->
-      <div class="card">
-        <h2>Insert Data</h2>
-        <div class="input-group">
-          <label for="guidId">Dummy Guid Id:</label>
-          <textarea
-            id="guidId"
-            [(ngModel)]="guidId"
-            rows="1"
-            placeholder="Generate Dummy Guid Id"
-          ></textarea>
-          <button class="btn secondary" (click)="generateGuid()">
-            Generate Dummy Guid Id
-          </button>
-        </div>
-        <!-- dynamic-form.component.html -->
-        <form [formGroup]="form" (ngSubmit)="onSubmit()">
-          <ng-container formArrayName="fields" *ngFor="let field of fieldsArray.controls; let i = index">
-            <div [formGroupName]="i" class="input-group">
-              <label>{{ field.get('name')?.value }}:</label>
-              <input
-                type="{{ MilvusDataTypeMapping[selectedCollectionData.indexData.fields[i].dataType] }}"
-                formControlName="value"
-                placeholder="Enter a {{ field.get('name')?.value }}"
-              />
-            </div>
-            <div
-              class="input-group"
-              *ngIf="MilvusDataTypeMapping[selectedCollectionData.indexData.fields[i].dataType] === MilvusDataTypeMapping[101]"
-            >
-              <label for="arrayField">Array (512 dimensions):</label>
-              <textarea
-                id="arrayField"
-                [(ngModel)]="arrayField"
-                rows="5"
-                placeholder="Enter 512-dimensional array"
-                [ngModelOptions]="{standalone: true}"
-              ></textarea>
-              <button class="btn secondary" type="button" (click)="generateDummyArray()">
-                Generate Dummy Array
-              </button>
-            </div>
-
-          </ng-container>
-
-          <button type="submit" class="btn primary">Insert Data</button>
-        </form>
-
-        <!--        <form [formGroup]="form" (ngSubmit)="onSubmit()">-->
-        <!--          <ng-container *ngFor="let field of fieldsArray.controls; let i = index">-->
-        <!--            <div class="input-group" formGroupName="{{field}}">-->
-        <!--              <label>{{ field.get('name')?.value }} : </label>-->
-        <!--              <input-->
-        <!--                type="{{ MilvusDataTypeMapping[selectedCollectionData.indexData.fields[i].dataType] }}"-->
-        <!--                formControlName="value"-->
-        <!--                placeholder="Enter a {{ field.get('name')?.value }}"-->
-        <!--              />-->
-        <!--            </div>-->
-
-        <!--            <div-->
-        <!--              class="input-group"-->
-        <!--              *ngIf="MilvusDataTypeMapping[selectedCollectionData.indexData.fields[i].dataType] === MilvusDataTypeMapping[101]"-->
-        <!--            >-->
-        <!--              <label for="arrayField">Array (512 dimensions):</label>-->
-        <!--              <textarea-->
-        <!--                id="arrayField"-->
-        <!--                [(ngModel)]="arrayField"-->
-        <!--                rows="5"-->
-        <!--                placeholder="Enter 512-dimensional array"-->
-        <!--                [ngModelOptions]="{standalone: true}"-->
-        <!--              ></textarea>-->
-        <!--              <button class="btn secondary" type="button" (click)="generateDummyArray()">-->
-        <!--                Generate Dummy Array-->
-        <!--              </button>-->
-        <!--            </div>-->
-        <!--          </ng-container>-->
-
-        <!--          <button type="submit" class="btn primary">Insert Data</button>-->
-        <!--        </form>-->
+    <div *ngIf="selectedCollectionName" class="card connection-card">
+      <h2>Total Data Count : </h2>
+      <button class="btn primary" (click)="getTotalData()">Get Data</button>
+      <h3>{{ totalEntries }}</h3>
+    </div>
+    <div *ngIf="selectedCollectionName && isConnected" class="card connection-card">
+      <h2>Connect to Milvus</h2>
+      <div class="input-group">
+        <label for="ipAddress">IP Address:</label>
+        <input
+          [(ngModel)]="ipAddress"
+          placeholder="Enter Milvus IP address"
+        />
+      </div>
+      <div class="input-group">
+        <label for="port">Port:</label>
+        <input
+          [(ngModel)]="port"
+          type="number"
+          placeholder="Enter port number"
+        />
+      </div>
+      <button class="btn primary" (click)="connectToMilvus()">Connect Again</button>
+      <div *ngIf="connectionError" class="error-message">
+        Connection failed. Please try again.
       </div>
     </div>
   </div>
+
+  <!-- Search Data Card -->
+  <div *ngIf="isConnected && selectedCollectionName && selectedCollectionData" class="card create-collection-card">
+
+    <h2>Search Collection</h2>
+    <form [formGroup]="searchForm" (ngSubmit)="search()">
+      <div class="input-group">
+        <label for="queryVector">Query Vector:</label>
+        <input
+          id="queryVector"
+          formControlName="queryVector"
+          placeholder="Enter vector as comma-separated values"
+        />
+      </div>
+
+      <!-- Query Vector Field -->
+      <div class="input-group">
+        <label for="queryVectorField">Query Vector Field:</label>
+        <input
+          id="queryVectorField"
+          formControlName="queryVectorField"
+          placeholder="Enter query vector field"
+        />
+      </div>
+
+      <!-- Top K -->
+      <div class="input-group">
+        <label for="topK">Top K:</label>
+        <input
+          id="topK"
+          type="number"
+          formControlName="topK"
+          min="1"
+          placeholder="Number of results to return"
+        />
+      </div>
+
+      <!-- Similarity Metric Type -->
+      <div class="input-group">
+        <label for="similarityMetricType">Similarity Metric Type:</label>
+        <select id="similarityMetricType" formControlName="similarityMetricType">
+          <option *ngFor="let metric of similarityMetrics" [value]="metric">{{ metric }}</option>
+        </select>
+      </div>
+
+      <!-- Output Fields (Multi-select) -->
+      <div class="input-group">
+        <label>Select Fields:</label>
+        <p-multiSelect
+          formControlName="outputFields"
+          [options]="allOutputFields"
+          [display]="'chip'"
+          [style]="{ width: '300px' }"
+          [filter]="true"
+          [showToggleAll]="false"
+          placeholder="Select fields"
+        ></p-multiSelect>
+      </div>
+
+      <!-- Nprobe (Optional) -->
+      <div class="input-group">
+        <label for="nprobe">Nprobe (optional):</label>
+        <input
+          id="nprobe"
+          type="number"
+          formControlName="nprobe"
+          placeholder="Enter Nprobe"
+        />
+      </div>
+
+      <!-- Level (Optional) -->
+      <div class="input-group">
+        <label for="level">Level (optional):</label>
+        <input
+          id="level"
+          type="number"
+          formControlName="level"
+          min="1"
+          max="3"
+          placeholder="Enter level (1-3)"
+        />
+      </div>
+
+      <!-- Radius (Optional) -->
+      <div class="input-group">
+        <label for="radius">Radius (optional):</label>
+        <input
+          id="radius"
+          type="number"
+          formControlName="radius"
+          placeholder="Enter search radius"
+        />
+      </div>
+
+      <!-- Range Filter (Optional) -->
+      <div class="input-group">
+        <label for="rangeFilter">Range Filter (optional):</label>
+        <input
+          id="rangeFilter"
+          type="number"
+          formControlName="rangeFilter"
+          placeholder="Enter range filter"
+        />
+      </div>
+
+      <!-- Offset (Optional) -->
+      <div class="input-group">
+        <label for="offset">Offset (optional):</label>
+        <input
+          id="offset"
+          type="number"
+          formControlName="offset"
+          placeholder="Enter offset for pagination"
+        />
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn primary">Search</button>
+    </form>
+
+
+  </div>
+
+  <!-- Index and Load Collection Card -->
+  <div *ngIf="isConnected && selectedCollectionName && selectedCollectionData" class="card create-collection-card">
+    <h2>Index and Load Collection</h2>
+    <div class="action-buttons">
+      <!-- Create Index Button with Loader -->
+      <div>
+        <label>Indexed columns :</label>
+        <select [(ngModel)]="columnForRemoveIndexing" name="columnName">
+          <option *ngFor="let column of indexedColumns" [value]="column">{{ column }}</option>
+        </select>
+        <div>
+          <button type="submit" class="btn primary" [disabled]="isRemovingIndex" (click)="removeIndex()">
+            Remove Index
+            <span *ngIf="isRemovingIndex" class="small-loader"></span>
+          </button>
+        </div>
+      </div>
+      <div>
+        <form class="index-container" (ngSubmit)="createIndex()">
+          <div>
+            <label>Collection Column Name</label>
+            <select [(ngModel)]="indexCreationParams.columnName" name="columnName">
+              <option *ngFor="let column of columns" [value]="column">{{ column }}</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Index Name</label>
+            <input type="text" [(ngModel)]="indexCreationParams.indexName" name="indexName" required>
+          </div>
+
+          <div>
+            <label>Similarity Metric</label>
+            <select (change)="setMetricType($event)" name="similarityMetricType" required>
+              <option *ngFor="let metric of similarityMetrics" [value]="metric">{{ metric }}</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Index Type</label>
+            <select (change)="setIndexType($event)" name="indexType" required>
+              <option *ngFor="let type of indexTypes" [value]="type">{{ type }}</option>
+            </select>
+          </div>
+
+
+          <div>
+            <label>Nlist</label>
+            <input type="number" [(ngModel)]="indexCreationParams.nlist" name="nlist" required>
+          </div>
+
+          <!-- Optional fields for IVF_PQ -->
+          <ng-template *ngIf="indexCreationParams.indexType === IndexType.IvfPq">
+            <div>
+              <label>M</label>
+              <input type="number" [(ngModel)]="indexCreationParams.m" name="m">
+            </div>
+
+            <div>
+              <label>Nbits</label>
+              <input type="number" [(ngModel)]="indexCreationParams.nbits" name="nbits">
+            </div>
+          </ng-template>
+
+          <!-- Optional fields for HNSW and RHNSW -->
+          <ng-template
+            *ngIf="indexCreationParams.indexType === IndexTypes.Hnsw || indexCreationParams.indexType == IndexType.RhnswPq || indexCreationParams.indexType == IndexType.RhnswFlat || indexCreationParams.indexType == IndexTypes.RhnswSq">
+            <div>
+              <label>M</label>
+              <input type="number" [(ngModel)]="indexCreationParams.M" name="M">
+            </div>
+
+            <div>
+              <label>efConstruction</label>
+              <input type="number" [(ngModel)]="indexCreationParams.efConstruction" name="efConstruction">
+            </div>
+          </ng-template>
+
+          <!-- Optional field for RHNSW_PQ -->
+          <div *ngIf="indexCreationParams.indexType === IndexType.RhnswPq">
+            <label>PQM</label>
+            <input type="number" [(ngModel)]="indexCreationParams.PQM" name="PQM">
+          </div>
+
+          <div>
+            <button type="submit" class="btn primary" [disabled]="isCreatingIndex">
+              Create Index
+              <span *ngIf="isCreatingIndex" class="small-loader"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+      <!-- Load Collection Button with Loader -->
+      <button *ngIf="!collectionStages.IsLoaded" class="btn primary" (click)="loadCollection()"
+              [disabled]="isLoadingCollection">
+        Load Collection
+        <span *ngIf="isLoadingCollection" class="small-loader"></span>
+      </button>
+
+      <!-- Unload Collection Button with Loader -->
+      <button *ngIf="collectionStages.IsLoaded" class="btn primary" (click)="releaseCollection()"
+              [disabled]="isReleasingCollection">
+        UnLoad Collection
+        <span *ngIf="isReleasingCollection" class="small-loader"></span>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Delete Data -->
+  <!--Delete Data -->
+  <div *ngIf="selectedCollectionName && selectedCollectionData" class="action-cards">
+    <!-- Delete by Properties Card -->
+    <div class="card">
+      <h2>Delete Data by Primary key</h2>
+      <form [formGroup]="deleteByIdForm" (ngSubmit)="onDeleteByPrimaryId()">
+        <div class="input-group">
+          <label for="deleteField">Primary key:</label>
+          <h4>{{ deleteByIdForm.get('fieldName')?.value }}</h4>
+        </div>
+
+        <div class="input-group">
+          <input type="text" formControlName="fieldValue" placeholder="Enter value to delete">
+        </div>
+        <button type="submit" class="btn primary">Delete Data</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Delete Data by Properties</h2>
+      <form [formGroup]="deleteByPropertiesForm" (ngSubmit)="onDeleteByPropertiesSubmit()">
+        <div class="input-group">
+          <label for="deleteField">Field to Match:</label>
+          <select id="deleteField" formControlName="fieldName">
+            <option *ngFor="let field of columns" [value]="field">{{ field }}</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label for="deleteValue">Value to Delete:</label>
+          <input type="text" id="deleteValue" formControlName="fieldValue" placeholder="Enter value to delete">
+        </div>
+        <button type="submit" class="btn primary">Delete Data by Properties</button>
+      </form>
+    </div>
+
+    <!-- Full Data Deletion Card -->
+    <div class="card">
+      <h2>Delete All Data</h2>
+      <p>Warning: This will delete all records from the selected collection.</p>
+      <button (click)="onFullDelete()" class="btn danger">Delete All Data</button>
+    </div>
+  </div>
+
+
+  <!--Insert Data -->
+  <div *ngIf="selectedCollectionName && selectedCollectionData" class="action-cards">
+    <!-- Insert Data Card -->
+    <div class="card">
+      <h2>Insert Data</h2>
+      <div class="input-group">
+        <label for="guidId">Dummy Guid Id:</label>
+        <textarea
+          id="guidId"
+          [(ngModel)]="guidId"
+          rows="1"
+          placeholder="Generate Dummy Guid Id"
+        ></textarea>
+        <button class="btn secondary" (click)="generateGuid()">
+          Generate Dummy Guid Id
+        </button>
+      </div>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <ng-container formArrayName="fields" *ngFor="let field of fieldsArray.controls; let i = index">
+          <div [formGroupName]="i" class="input-group">
+            <label>{{ field.get('name')?.value }}:</label>
+            <input
+              type="{{ MilvusDataTypeMapping[selectedCollectionData.indexData.fields[i].dataType] }}"
+              formControlName="value"
+              placeholder="Enter a {{ field.get('name')?.value }}"
+            />
+          </div>
+          <div
+            class="input-group"
+            *ngIf="MilvusDataTypeMapping[selectedCollectionData.indexData.fields[i].dataType] === MilvusDataTypeMapping[101]"
+          >
+            <label for="arrayField">Array (512 dimensions):</label>
+            <textarea
+              id="arrayField"
+              [(ngModel)]="arrayField"
+              rows="5"
+              placeholder="Enter 512-dimensional array"
+              [ngModelOptions]="{standalone: true}"
+            ></textarea>
+            <button class="btn secondary" type="button" (click)="generateDummyArray()">
+              Generate Dummy Array
+            </button>
+          </div>
+
+        </ng-container>
+
+        <button type="submit" class="btn primary">Insert Data</button>
+      </form>
+    </div>
+  </div>
+
+  <!--Show Schema Data -->
   <div *ngIf="selectedCollectionName">
     <!-- Button to toggle schema data visibility -->
     <button class="btn secondary" (click)="toggleSchemaData()">
@@ -401,4 +438,19 @@
     </div>
   </div>
 
+  <!--Show searched Data -->
+  <div *ngIf="searchResult">
+    <!-- Button to toggle schema data visibility -->
+    <button class="btn secondary" (click)="toggleSearchData()">
+      {{ showSearchResult ? 'Hide' : 'Show' }} SearchResult
+    </button>
+
+    <!-- Card displaying schema data, hidden by default -->
+    <div *ngIf="showSearchResult" class="card">
+      <h2>Current Schema Data</h2>
+      <pre><p>{{ searchResult | json }}</p></pre>
+      <!--      <pre><p>{{ form.value | json }}</p></pre>-->
+    </div>
+  </div>
+  <app-expressions></app-expressions>
 </div>

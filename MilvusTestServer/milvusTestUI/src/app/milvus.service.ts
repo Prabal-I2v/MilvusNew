@@ -1,7 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import {IndexCreationParams, MilvusCollectionDataModel, SearchRequest} from "./models/MilvusDataModel";
+import {
+  IndexCreationParams,
+  InsertDataFieldData, InsertDataRequest,
+  MilvusCollectionDataModel,
+  SearchRequest
+} from "./models/MilvusDataModel";
 
 @Injectable({
   providedIn: 'root',
@@ -15,8 +20,12 @@ export class MilvusService {
     return this.http.get(`${this.apiUrl}/create-collection?collectionName=${collectionName}&dimension=${dimension}`, {});
   }
 
-  insertData(collectionName: string, vectors: number[][]): Observable<any> {
-    return this.http.post(`${this.apiUrl}/insert-data?collectionName=${collectionName}`, vectors);
+  insertData(collectionName: string, data : InsertDataRequest[]): Observable<any> {
+    return this.http.post(`${this.apiUrl}/insert-data?collectionName=${collectionName}`, data);
+  }
+
+  getTotalData(collectionName: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/total-data?collectionName=${collectionName}`,  {});
   }
 
   search(requestParams: SearchRequest): Observable<any> {
@@ -31,6 +40,16 @@ export class MilvusService {
     return this.http.get(`${this.apiUrl}/remove-index?collectionName=${collectionName}&columnName=${columnName}`, {});
   }
 
+  deleteDataByPrimaryId(collectionName: string, expression : string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/deleteDataByPrimaryId?collectionName=${collectionName}&expression=${expression}`, {});
+  }
+
+  deleteDataByProperties(collectionName: string, expression : string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/deleteDataByProperties?collectionName=${collectionName}&expression=${expression}`, {});
+  }
+  deleteAllData(collectionName: string, expression : string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/deleteAllData?collectionName=${collectionName}&expression=${expression}`, {});
+  }
  loadCollection(collectionName: string): Observable<any> {
     return this.http.get(`${this.apiUrl}/load-collection?collectionName=${collectionName}`, {});
   }

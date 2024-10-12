@@ -4,13 +4,16 @@ import {MilvusService} from './milvus.service';
 import {
   ConsistencyLevel,
   IndexCreationParams,
-  IndexType,
+  IndexType, InsertDataRequest,
   MilvusCollectionDataModel,
-  MilvusDataTypeMapping, MilvusFieldDataModel, SearchRequest,
+  MilvusDataTypeMapping,
+  MilvusFieldDataModel,
+  SearchRequest,
   SimilarityMetricType
 } from "./models/MilvusDataModel";
 import {TimelineStage} from "./timeline/timeline.component";
 import {AbstractControl, FormArray, FormBuilder, FormGroup, Validators} from "@angular/forms";
+import {Expression} from "@angular/compiler";
 
 @Component({
   selector: 'app-root',
@@ -20,9 +23,6 @@ import {AbstractControl, FormArray, FormBuilder, FormGroup, Validators} from "@a
 export class AppComponent implements OnInit, OnChanges {
   collectionName = '';
   dimension = 512;
-  vectors = [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]];
-  queryVector = [0.1, 0.2, 0.3];
-  topK = 2;
   collections: string[] = [];
   selectedCollectionName: string = '';
   collectionStatus: string = ''; // Status updated based on operations
@@ -49,7 +49,9 @@ export class AppComponent implements OnInit, OnChanges {
   }
 
   indexTypes = Object.keys(IndexType).filter(key => isNaN(Number(key)));  // Use enum values
+
   similarityMetrics = Object.keys(SimilarityMetricType).filter(key => isNaN(Number(key)));  // Use enum values
+
   consistencyLevel = Object.keys(ConsistencyLevel).filter(key => isNaN(Number(key)));  // Use enum values
 
   indexCreationParams: IndexCreationParams = {
@@ -78,6 +80,12 @@ export class AppComponent implements OnInit, OnChanges {
     consistencyLevel: undefined
   };
 
+  insertDataRequest: InsertDataRequest = {
+    additionalData: {},
+    fields: []
+
+  };
+
   columns: string[] = [];
   indexedColumns: string[] = [];
 
@@ -101,7 +109,6 @@ export class AppComponent implements OnInit, OnChanges {
     'Customized' : ConsistencyLevel.Customized
   };
 
-
   private indexTypeMap: { [key: string]: IndexType } = {
     'Invalid': IndexType.Invalid,
     'Flat': IndexType.Flat,
@@ -121,13 +128,32 @@ export class AppComponent implements OnInit, OnChanges {
 
   searchForm: FormGroup;
 
-  allOutputFields: string[] = [];
-  selectedOutputFields: string[] = [];
+  deleteByPropertiesForm: FormGroup;
 
+  deleteByIdForm: FormGroup;
+
+  allOutputFields: string[] = [];
+
+  searchResult : any;
+
+  totalEntries : number = 0;
 
   constructor(public milvusService: MilvusService, public fb: FormBuilder, public cdrRef: ChangeDetectorRef) {
     this.form = this.fb.group({
+      collectionName: ['', Validators.required], // Required field
       fields: this.fb.array([]),
+    });
+
+    // Initialize delete form for deleting by properties
+    this.deleteByPropertiesForm = this.fb.group({
+      fieldName: ['', Validators.required],
+      fieldValue: ['', Validators.required]
+    });
+
+   // Initialize delete form for deleting by properties
+    this.deleteByIdForm = this.fb.group({
+      fieldName: ['', Validators.required],
+      fieldValue: ['', Validators.required]
     });
 
     this.searchForm = this.fb.group({
@@ -236,14 +262,18 @@ export class AppComponent implements OnInit, OnChanges {
         this.allOutputFields.push(field.name);
 
         //initialize insert data form
+        this.form.get('collectionName')?.patchValue(this.selectedCollectionName);
         this.fieldsArray.push(
           this.fb.group({
             name: [field.name],
             value: ['', Validators.required], // Add validators as needed
+            dataType: [field.dataType]
           })
         );
 
-
+        if(field.isPrimaryKey) {
+          this.deleteByIdForm.get('fieldName')?.patchValue(field.name)
+        }
         //initialize search form
         if (this.MilvusDataTypeMapping[field.dataType] === 'floatArray') {
           this.searchForm.get('queryVectorField')?.patchValue(field.name);
@@ -253,7 +283,71 @@ export class AppComponent implements OnInit, OnChanges {
 
       });
     }
+    this.getTotalData();
     this.cdrRef.detectChanges(); // Trigger change detection
+  }
+
+
+  // Handle form submission for deleting by properties
+  onDeleteByPrimaryId() {
+    if (this.deleteByIdForm.valid) {
+      const { fieldName, fieldValue } = this.deleteByIdForm.value;
+      var expression = `"${fieldName}" = "${fieldValue}"`; // Build primary key expression
+      this.deleteByPrimaryId(this.selectedCollectionName, expression);
+    }
+  }
+
+  onDeleteByPropertiesSubmit() {
+    if (this.deleteByPropertiesForm.valid) {
+      const { fieldName, fieldValue } = this.deleteByPropertiesForm.value;
+      this.deleteDataByProperties(this.selectedCollectionName, fieldName, fieldValue);
+    }
+  }
+
+  // Service call to delete data by primary key
+  deleteByPrimaryId(collectionName: string, expression: string) {
+    this.milvusService.deleteDataByPrimaryId(collectionName, expression).subscribe(
+      (response) => {
+        console.log(`Deleted data where ${expression}`);
+        // Refresh the collection data or notify the user
+      },
+      (error) => {
+        console.error('Error deleting data by Primary Id:', error);
+      }
+    );
+  }
+  // Service call to delete data by properties
+  deleteDataByProperties(collectionName: string, fieldName: string, fieldValue: string) {
+    this.milvusService.deleteDataByProperties(collectionName, fieldName).subscribe(
+      (response) => {
+        console.log(`Deleted data where ${fieldName} = ${fieldValue}`);
+        // Refresh the collection data or notify the user
+      },
+      (error) => {
+        console.error('Error deleting data by properties:', error);
+      }
+    );
+  }
+
+  // Full data deletion logic
+  onFullDelete() {
+    if (confirm("Are you sure you want to delete all data from this collection?")) {
+      this.deleteAllData(this.selectedCollectionName);
+    }
+  }
+
+  // Service call to delete all data from a collection
+  deleteAllData(collectionName: string) {
+    var expression = ""
+    this.milvusService.deleteAllData(collectionName, expression).subscribe(
+      (response) => {
+        console.log(`All data deleted from ${collectionName}`);
+        // Refresh the collection data or notify the user
+      },
+      (error) => {
+        console.error('Error deleting all data:', error);
+      }
+    );
   }
 
   fetchCollections() {
@@ -368,7 +462,7 @@ export class AppComponent implements OnInit, OnChanges {
 
       // Call the search service method
       this.milvusService.search(this.searchRequestParams).subscribe(result => {
-        console.log('Search Results:', result);
+       this.searchResult = result;
         // Handle the result as needed (e.g., display results)
       }, error => {
         console.error('Search failed:', error);
@@ -380,8 +474,10 @@ export class AppComponent implements OnInit, OnChanges {
 
   // Helper method to parse the query vector string into an array
   private parseQueryVector(vectorString: string): number[] {
-    var vectorArray = vectorString.split(',').map(value => parseFloat(value.trim())).filter(value => !isNaN(value));
-    return vectorArray;
+    var vectorStringCleaned = vectorString.replace(/[\[\]]/g, ''); // Remove [ and ]
+    var vectorArray = vectorStringCleaned.split(',');
+    var res = vectorArray.map(value => parseFloat(value.trim())).filter(value => !isNaN(value));
+    return res;
   }
 
   describeCollection(selectedCollection: string) {
@@ -396,32 +492,55 @@ export class AppComponent implements OnInit, OnChanges {
     });
   }
 
-
   refreshCollectionStatus() {
     if (this.selectedCollectionName) {
       this.describeCollection(this.selectedCollectionName);
     }
   }
 
+  generateNormalizedArray(size: number): string {
+    // Generate an array of random values between -1 and 1
+    const array = Array.from({ length: size }, () => Math.random() * 2 - 1);
+
+    // Calculate the L2 norm (Euclidean norm)
+    const norm = Math.sqrt(array.reduce((sum, value) => sum + value * value, 0));
+
+    // Normalize the array
+    const normalizedArray = array.map(value => (value / norm).toFixed(4));
+
+    // Return the normalized array as a comma-separated string
+    return `[${normalizedArray.join(', ')}]`;
+  }
+
   generateDummyArray() {
-    const dummyArray = Array.from({length: 513}, () => (Math.random() * 2 - 1).toFixed(4)).join(', ');
-    this.arrayField = `[${dummyArray}]`;
+    this.arrayField = this.generateNormalizedArray(512);
+  }
+
+  getTotalData()
+  {
+    this.milvusService.getTotalData(this.selectedCollectionName).subscribe((res) => {
+        this.totalEntries = res;
+      },
+      (error) => {
+        this.totalEntries = 0;
+      });
+
   }
 
   onSubmit() {
-    this.isInsertingData = true;
-    // Handle form submission logic
-    // console.log('Array:', this.arrayField);
-    // console.log('Number:', this.numberField);
-    // console.log('String:', this.stringField);
-    // Add your insert logic here
-    console.log(this.form.value)
-    this.milvusService.insertData(this.selectedCollectionName, this.vectors).subscribe(() => {
-        this.isInsertingData = false;
-      },
-      (error) => {
-        this.isInsertingData = false;
-      });
+    if(this.form.valid) {
+      var data : InsertDataRequest[] = [];
+      this.isInsertingData = true;
+      console.log(this.form.value)
+      this.insertDataRequest.fields = this.form.value['fields'];
+      data.push(this.insertDataRequest)
+      this.milvusService.insertData(this.selectedCollectionName, data).subscribe(() => {
+          this.isInsertingData = false;
+        },
+        (error) => {
+          this.isInsertingData = false;
+        });
+    }
   }
 
   generateGuid() {
@@ -441,6 +560,11 @@ export class AppComponent implements OnInit, OnChanges {
   showSchemaData = false;  // Initially set to false to hide schema data
   toggleSchemaData() {
     this.showSchemaData = !this.showSchemaData;  // Toggle the visibility
+  }
+
+  showSearchResult : boolean = false;  // Initially set to false to hide search result data
+  toggleSearchData() {
+    this.showSearchResult = !this.showSearchResult;  // Toggle the visibility
   }
 
   protected readonly MilvusDataTypeMapping = MilvusDataTypeMapping;

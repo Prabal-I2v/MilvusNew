@@ -12,14 +12,14 @@ public class MilvusDataModel
 public class MilvusCollectionDataModel
 {
     public string CollectionName { get; set; }
-    public MilvusIndexDataModel IndexData { get; set; }
+    public CollectionFields IndexData { get; set; }
     public bool IsCollectionLoaded { get; set; } = false;
     public bool IsCollectionIndexed { get; set; } = false;
     public bool DoCollectionHaveData { get; set; } = false;
     public ConsistencyLevel ConsistencyLevel { get; set; }
 }
 
-public class MilvusIndexDataModel
+public class CollectionFields
 {
     public List<MilvusFieldDataModel> Fields { get; set; }
 }
@@ -30,6 +30,7 @@ public class MilvusFieldDataModel
     public string Name { get; set; }
     public MilvusDataType DataType { get; set; }
     public bool isIndexed { get; set; } = false;
+    public bool isPrimaryKey { get; set; } = false;
     public SimilarityMetricType? SimilarityMetricType  { get; set; } = Milvus.Client.SimilarityMetricType.Invalid;
     public IndexType? IndexType { get; set; } = Milvus.Client.IndexType.Invalid;
 
@@ -113,5 +114,18 @@ public class SearchRequest
         QueryVector = new List<float>();
         OutputFields = new List<string>();
     }
+}
+
+public class InsertDataRequest
+{
+    public List<InsertDataFieldData> Fields { get; set; }
+    public Dictionary<string, string> AdditionalData { get; set; }
+}
+
+public class InsertDataFieldData
+{
+    public string Name { get; set; }
+    public dynamic Value { get; set; }
+    public MilvusDataType DataType { get; set; }
 }
 

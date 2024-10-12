@@ -1,0 +1,147 @@
+<div class="container">
+  <div class="card">
+    <h2>Expression Builder</h2>
+
+    <div class="input-group">
+      <label>Select Expression Type:</label>
+      <select [(ngModel)]="selectedExpressionType" (change)="onExpressionTypeChange()">
+        <option value="">-- Select --</option>
+        <option value="comparison">Comparison</option>
+        <option value="logical">Logical</option>
+        <option value="arithmetic">Arithmetic</option>
+        <option value="term">Term (IN)</option>
+        <option value="match">Match</option>
+        <option value="jsonArray">JSON Array</option>
+        <option value="array">Array</option>
+      </select>
+    </div>
+
+    <!-- Comparison Expression -->
+    <div class="card" *ngIf="selectedExpressionType === 'comparison'">
+      <div class="input-group">
+        <input placeholder="Left Operand" [(ngModel)]="leftOperand" />
+      </div>
+      <div class="input-group">
+        <select [(ngModel)]="leftOperandType">
+          <option value="">Select Type</option>
+          <option value="string">String</option>
+          <option value="number">Number</option>
+          <option value="boolean">Boolean</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <select [(ngModel)]="comparisonOperator">
+          <option value=">">></option>
+          <option value="<"><</option>
+          <option value="==">==</option>
+          <option value="!=">!=</option>
+          <option value=">=">>=</option>
+          <option value="<="><=</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <input placeholder="Right Operand" [(ngModel)]="rightOperand" />
+      </div>
+      <div class="input-group">
+        <select [(ngModel)]="rightOperandType">
+          <option value="">Select Type</option>
+          <option value="string">String</option>
+          <option value="number">Number</option>
+          <option value="boolean">Boolean</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Logical Expression -->
+    <div class="card" *ngIf="selectedExpressionType === 'logical'">
+      <div class="input-group">
+        <input placeholder="Expression 1" [(ngModel)]="logicalExpr1" />
+      </div>
+      <div class="input-group">
+        <select [(ngModel)]="logicalOperator">
+          <option value="&&">AND</option>
+          <option value="||">OR</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <input placeholder="Expression 2" [(ngModel)]="logicalExpr2" />
+      </div>
+    </div>
+
+    <!-- Arithmetic Expression -->
+    <div class="card" *ngIf="selectedExpressionType === 'arithmetic'">
+      <div class="input-group">
+        <input placeholder="Operand 1" [(ngModel)]="arithmeticOperand1" />
+      </div>
+      <div class="input-group">
+        <select [(ngModel)]="arithmeticOperator">
+          <option value="+">+</option>
+          <option value="-">-</option>
+          <option value="*">*</option>
+          <option value="/">/</option>
+          <option value="**">**</option>
+          <option value="%">%</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <input placeholder="Operand 2" [(ngModel)]="arithmeticOperand2" />
+      </div>
+    </div>
+
+    <!-- Term Expression -->
+    <div class="card" *ngIf="selectedExpressionType === 'term'">
+      <div class="input-group">
+        <input placeholder="Field" [(ngModel)]="termField" />
+      </div>
+      <div class="input-group">
+        <select>
+          <option value="in">IN</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <input placeholder="Values (comma separated)" [(ngModel)]="termValues" />
+      </div>
+    </div>
+
+    <!-- Match Expression -->
+    <div class="card" *ngIf="selectedExpressionType === 'match'">
+      <div class="input-group">
+        <input placeholder="Field" [(ngModel)]="matchField" />
+      </div>
+      <div class="input-group">
+        <input placeholder="Value" [(ngModel)]="matchValue" />
+      </div>
+    </div>
+
+    <!-- JSON Array Expression -->
+    <div class="card" *ngIf="selectedExpressionType === 'jsonArray'">
+      <div class="input-group">
+        <input placeholder="JSON Field" [(ngModel)]="jsonArrayField" />
+      </div>
+      <div class="input-group">
+        <input placeholder="Index" [(ngModel)]="jsonArrayIndex" />
+      </div>
+    </div>
+
+    <!-- Array Expression -->
+    <div class="card" *ngIf="selectedExpressionType === 'array'">
+      <div class="input-group">
+        <input placeholder="Array Field" [(ngModel)]="arrayField" />
+      </div>
+      <div class="input-group">
+        <input placeholder="Index" [(ngModel)]="arrayIndex" />
+      </div>
+    </div>
+
+    <!-- Build Expression Button -->
+    <div class="action-buttons">
+      <button class="btn primary" (click)="buildExpression()">Build Expression</button>
+    </div>
+
+    <!-- Display Generated Expression -->
+    <div *ngIf="expression" class="card">
+      <h3>Generated Expression</h3>
+      <code>{{ expression }}</code>
+    </div>
+  </div>
+</div>

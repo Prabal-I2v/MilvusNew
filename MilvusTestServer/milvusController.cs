@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Milvus.Client;
 using MilvusTestServer;
@@ -46,7 +47,7 @@ public class milvusController : ControllerBase
     
     [HttpPost]
     [Route("insert-data")]
-    public async Task<IActionResult> InsertData(string collectionName, [FromBody] List<MilvusDataModel> data)
+    public async Task<IActionResult> InsertData([FromQuery] string collectionName, [FromBody] List<InsertDataRequest> data)
     {
         try
         {
@@ -130,6 +131,23 @@ public class milvusController : ControllerBase
     }
     
     [HttpGet]
+    [Route("total-data")]
+    public async Task<IActionResult> GetTotalData([FromQuery] string collectionName)
+    {
+        try
+        {
+            var res = await _milvusService.GetTotalData(collectionName);
+            return Ok(res);
+
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine(ex);
+            return BadRequest(ex.Message);
+        }
+    }
+    
+    [HttpGet]
     [Route("release-collection")]
     public async Task<IActionResult> ReleaseCollection([FromQuery] string collectionName)
     {
@@ -153,6 +171,54 @@ public class milvusController : ControllerBase
         try
         {
             var res = await _milvusService.DescribeCollectionAsync(collectionName);
+            return Ok(res);
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine(ex);
+            return BadRequest(ex.Message);
+        }
+    }
+    
+    [HttpGet]
+    [Route("deleteDataByProperties")]
+    public async Task<IActionResult> DeleteDataByProperties([FromQuery] string collectionName, [FromQuery] string expression)
+    {
+        try
+        {
+            var res = await _milvusService.DeleteDataByProperties(collectionName, expression);
+            return Ok(res);
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine(ex);
+            return BadRequest(ex.Message);
+        }
+    }
+    
+    [HttpGet]
+    [Route("deleteDataByPrimaryId")]
+    public async Task<IActionResult> DeleteDataByPrimaryId([FromQuery] string collectionName, [FromQuery] string expression)
+    {
+        try
+        {
+            var res = await _milvusService.DeleteDataByPrimaryId(collectionName, expression);
+            return Ok(res);
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine(ex);
+            return BadRequest(ex.Message);
+        }
+    }
+    
+    [HttpGet]
+    [Route("deleteAllData")]
+    public async Task<IActionResult> DeleteAllData([FromQuery] string collectionName, [FromQuery] string expression)
+    {
+        try
+        {
+            var res = await _milvusService.DeleteAllData(collectionName, expression);
             return Ok(res);
         }
         catch(Exception ex)

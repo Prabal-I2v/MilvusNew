@@ -1,22 +1,16 @@
-// Model representing Milvus Data
-export interface MilvusDataModel {
-  id: number;
-  embedding: number[];
-  guidId: string;
-}
 
 // Model representing Milvus Collection Data
 export interface MilvusCollectionDataModel {
   collectionName: string;
-  indexData: MilvusIndexDataModel;
+  indexData: CollectionFields;
   doCollectionHaveData: boolean;
   isCollectionLoaded: boolean;
   isCollectionIndexed: boolean;
-  consistencyLevel : ConsistencyLevel;
+  consistencyLevel: ConsistencyLevel;
 }
 
 // Model representing Milvus Index Data
-export interface MilvusIndexDataModel {
+export interface CollectionFields {
   fields: MilvusFieldDataModel[];
 }
 
@@ -26,10 +20,27 @@ export interface MilvusFieldDataModel {
   name: string;
   dataType: number;
   isIndexed: boolean;
-  similarityMetricType : SimilarityMetricType;
-  indexType : IndexType;
+  similarityMetricType: SimilarityMetricType;
+  indexType: IndexType;
+  isPrimaryKey: boolean;
 }
 
+export enum MilvusDataType {
+  None = 0,          // None
+  Bool = 1,          // Boolean type
+  Int8 = 2,          // 8-bit integer
+  Int16 = 3,         // 16-bit integer
+  Int32 = 4,         // 32-bit integer
+  Int64 = 5,         // 64-bit integer
+  Float = 10,        // 32-bit floating point
+  Double = 11,       // 64-bit floating point
+  String = 20,       // String type
+  VarChar = 21,      // Variable-length string
+  Array = 22,        // Array type
+  Json = 23,         // JSON type
+  BinaryVector = 100, // Binary vector
+  FloatVector = 101   // Floating point vector
+}
 export const MilvusDataTypeMapping: { [key: number]: string } = {
   1: "bool",
   5: "number",
@@ -38,7 +49,7 @@ export const MilvusDataTypeMapping: { [key: number]: string } = {
   8: "string",
   9: "string",
   101: "floatArray",
-};
+}
 
 // index-creation-params.model.ts
 export interface IndexCreationParams {
@@ -54,7 +65,6 @@ export interface IndexCreationParams {
   efConstruction?: number;
   PQM?: number;
 }
-
 
 export enum IndexType {
   Invalid = 0,
@@ -93,7 +103,6 @@ export enum IndexType {
   AutoIndex
 }
 
-
 export enum SimilarityMetricType {
   Invalid,
 
@@ -121,7 +130,6 @@ export enum SimilarityMetricType {
   // Substructure: measures similarity between a chemical structure and its substructure, valid for binary vectors.
   Substructure
 }
-
 
 export interface SearchRequest {
   /**
@@ -217,6 +225,21 @@ export enum ConsistencyLevel {
    */
   Customized = 4
 }
+
+export interface InsertDataRequest {
+  fields: InsertDataFieldData[];
+  additionalData: { [key: string]: string }
+}
+
+export interface InsertDataFieldData {
+  name: string;
+  value: any; // Use 'any' for dynamic typing, you can narrow it down if needed
+  dataType: MilvusDataType;
+}
+
+
+
+
 
 
 
