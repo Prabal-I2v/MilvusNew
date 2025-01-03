@@ -1,4 +1,3 @@
-
 // Model representing Milvus Collection Data
 export interface MilvusCollectionDataModel {
   collectionName: string;
@@ -41,6 +40,7 @@ export enum MilvusDataType {
   BinaryVector = 100, // Binary vector
   FloatVector = 101   // Floating point vector
 }
+
 export const MilvusDataTypeMapping: { [key: number]: string } = {
   1: "bool",
   5: "number",
@@ -131,21 +131,16 @@ export enum SimilarityMetricType {
   Substructure
 }
 
-export interface SearchRequest {
-  /**
-   * Name of the collection to search in.
-   */
-  collectionName: string;
-
+export class VectorSearchRequest {
   /**
    * The vector to use for the search query.
    */
   queryVector: number[];
 
   /**
-   * Number of top results to return.
+   * The field representing the query vector.
    */
-  topK: number;
+  queryVectorField: string;
 
   /**
    * Metric type used to measure similarity.
@@ -173,6 +168,36 @@ export interface SearchRequest {
    */
   rangeFilter?: number;
 
+  constructor(
+    queryVector: number[],
+    queryVectorField: string,
+    similarityMetricType: SimilarityMetricType,
+    nprobe?: number,
+    level?: number,
+    radius?: number,
+    rangeFilter?: number
+  ) {
+    this.queryVector = queryVector;
+    this.queryVectorField = queryVectorField;
+    this.similarityMetricType = similarityMetricType;
+    this.nprobe = nprobe;
+    this.level = level;
+    this.radius = radius;
+    this.rangeFilter = rangeFilter;
+  }
+}
+
+export class SearchRequest {
+  /**
+   * Name of the collection to search in.
+   */
+  collectionName: string;
+
+  /**
+   * Number of top results to return.
+   */
+  topK: number;
+
   /**
    * Optional offset for pagination.
    */
@@ -188,10 +213,33 @@ export interface SearchRequest {
    */
   outputFields: string[];
 
+  primaryKey: string;
+  primaryKeyType : MilvusDataType;
+
   /**
-   * The field representing the query vector.
+   * Nested vector search request containing vector-related parameters.
    */
-  queryVectorField: string;
+  vectorSearchRequest?: VectorSearchRequest;
+
+  constructor(
+    collectionName: string,
+    topK: number,
+    outputFields: string[],
+    primaryKey: string,
+    primaryKeyType: MilvusDataType,
+    vectorSearchRequest?: VectorSearchRequest,
+    offset?: number,
+    consistencyLevel?: ConsistencyLevel
+  ) {
+    this.collectionName = collectionName;
+    this.topK = topK;
+    this.outputFields = outputFields;
+    this.primaryKey = primaryKey;
+    this.primaryKeyType = primaryKeyType;
+    this.vectorSearchRequest = vectorSearchRequest;
+    this.offset = offset;
+    this.consistencyLevel = consistencyLevel;
+  }
 }
 
 export enum ConsistencyLevel {

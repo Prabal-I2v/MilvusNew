@@ -4,16 +4,18 @@ import {MilvusService} from './milvus.service';
 import {
   ConsistencyLevel,
   IndexCreationParams,
-  IndexType, InsertDataRequest,
+  IndexType,
+  InsertDataRequest,
   MilvusCollectionDataModel,
+  MilvusDataType,
   MilvusDataTypeMapping,
   MilvusFieldDataModel,
   SearchRequest,
-  SimilarityMetricType
+  SimilarityMetricType,
+  VectorSearchRequest
 } from "./models/MilvusDataModel";
 import {TimelineStage} from "./timeline/timeline.component";
 import {AbstractControl, FormArray, FormBuilder, FormGroup, Validators} from "@angular/forms";
-import {Expression} from "@angular/compiler";
 
 @Component({
   selector: 'app-root',
@@ -63,22 +65,17 @@ export class AppComponent implements OnInit, OnChanges {
     nlist: 1024,
   };
 
-  searchRequestParams: SearchRequest = {
-    collectionName: '',
-    queryVector: [],  // Empty array as default
-    topK: 10,  // Set a default value, for example 10
-    similarityMetricType: SimilarityMetricType.Cosine,  // Default value
-    outputFields: ['ids'],  // Default to return 'ids'
-    queryVectorField: '',
+  searchRequest = new SearchRequest(
+    '', // collectionName
+    10, // topK
+    ['ids'], // outputFields
+    "",
+    MilvusDataType.VarChar,
+    new VectorSearchRequest([], '', SimilarityMetricType.Cosine), // vectorSearchRequest with default values
+    undefined, // offset
+    undefined // consistencyLevel
+  );
 
-    // Optional fields can remain undefined if no default is needed
-    nprobe: undefined,
-    level: undefined,
-    radius: undefined,
-    rangeFilter: undefined,
-    offset: undefined,
-    consistencyLevel: undefined
-  };
 
   insertDataRequest: InsertDataRequest = {
     additionalData: {},
@@ -102,11 +99,11 @@ export class AppComponent implements OnInit, OnChanges {
   };
 
   private consistencyLevelMap: { [key: string]: ConsistencyLevel } = {
-    'Strong' : ConsistencyLevel.Strong,
-    'Session' : ConsistencyLevel.Session,
-    'BoundedStaleness' : ConsistencyLevel.BoundedStaleness,
-    'Eventually' : ConsistencyLevel.Eventually,
-    'Customized' : ConsistencyLevel.Customized
+    'Strong': ConsistencyLevel.Strong,
+    'Session': ConsistencyLevel.Session,
+    'BoundedStaleness': ConsistencyLevel.BoundedStaleness,
+    'Eventually': ConsistencyLevel.Eventually,
+    'Customized': ConsistencyLevel.Customized
   };
 
   private indexTypeMap: { [key: string]: IndexType } = {
@@ -132,11 +129,17 @@ export class AppComponent implements OnInit, OnChanges {
 
   deleteByIdForm: FormGroup;
 
+  deleteQuery: string = "";
+
   allOutputFields: string[] = [];
 
-  searchResult : any;
+  searchResult: any;
 
-  totalEntries : number = 0;
+  totalEntries: number = 0;
+
+  isUploadingData : boolean = false
+
+  noOfEvents : number  = 1;
 
   constructor(public milvusService: MilvusService, public fb: FormBuilder, public cdrRef: ChangeDetectorRef) {
     this.form = this.fb.group({
@@ -144,33 +147,56 @@ export class AppComponent implements OnInit, OnChanges {
       fields: this.fb.array([]),
     });
 
-    // Initialize delete form for deleting by properties
+    // Initialize delete by properties form for deleting by properties
     this.deleteByPropertiesForm = this.fb.group({
       fieldName: ['', Validators.required],
       fieldValue: ['', Validators.required]
     });
 
-   // Initialize delete form for deleting by properties
+    // Initialize delete by primary id form for deleting by properties
     this.deleteByIdForm = this.fb.group({
       fieldName: ['', Validators.required],
       fieldValue: ['', Validators.required]
     });
 
     this.searchForm = this.fb.group({
-      collectionName: ['', Validators.required], // Required field
-      queryVector: ["", Validators.required], // Required field
-      topK: [10, [Validators.required, Validators.min(1)]], // Default to 10, required, and minimum value of 1
-      similarityMetricType: ["", Validators.required], // Default to cosine, required
-      nprobe: [null], // Optional
-      level: [null], // Optional
-      radius: [null], // Optional
-      rangeFilter: [null], // Optional
+      collectionName: ['', Validators.required], // Required in SearchRequest
+      topK: [10, [Validators.required, Validators.min(1)]], // Required, defaults to 10
+      outputFields: [[], Validators.required], // Required
       offset: [null], // Optional
-      consistencyLevel: [ConsistencyLevel.Strong], // Default to Strong, optional
-      outputFields: [[], Validators.required], // Required field
-      queryVectorField: ['', Validators.required], // Required field
-      fieldsArray: this.fb.array([]), // Initialize empty FormArray for dynamic fields
+      consistencyLevel: [ConsistencyLevel.Strong], // Optional, default to Strong
+      primaryKey : ['', Validators.required],
+      primaryKeyType: [MilvusDataType.VarChar, Validators.required],
+
+      // Optional vectorSearchRequest group
+      vectorSearchRequest: this.fb.group({
+        queryVector: [null], // Optional initially
+        queryVectorField: [null], // Optional initially
+        similarityMetricType: [null], // Optional initially
+        nprobe: [null], // Optional
+        level: [null], // Optional
+        radius: [null], // Optional
+        rangeFilter: [null], // Optional
+      }),
     });
+
+// Subscribe to changes on queryVector and dynamically update validators
+    this.searchForm.get('vectorSearchRequest.queryVector')?.valueChanges.subscribe(value => {
+      const vectorSearchGroup = this.searchForm.get('vectorSearchRequest') as FormGroup;
+      if (value && value.length > 0) {
+        // Add required validators when queryVector is set
+        vectorSearchGroup.get('queryVectorField')?.setValidators([Validators.required]);
+        vectorSearchGroup.get('similarityMetricType')?.setValidators([Validators.required]);
+      } else {
+        // Remove validators when queryVector is not set
+        vectorSearchGroup.get('queryVectorField')?.clearValidators();
+        vectorSearchGroup.get('similarityMetricType')?.clearValidators();
+      }
+      // Update form validity after setting/clearing validators
+      vectorSearchGroup.get('queryVectorField')?.updateValueAndValidity();
+      vectorSearchGroup.get('similarityMetricType')?.updateValueAndValidity();
+    });
+
   }
 
   ngOnInit() {
@@ -271,8 +297,11 @@ export class AppComponent implements OnInit, OnChanges {
           })
         );
 
-        if(field.isPrimaryKey) {
-          this.deleteByIdForm.get('fieldName')?.patchValue(field.name)
+        if (field.isPrimaryKey) {
+          this.deleteByIdForm.get('fieldName')?.patchValue(field.name);
+          this.searchForm.get('primaryKey')?.patchValue(field.name);
+          this.searchForm.get('primaryKeyType')?.patchValue(field.dataType);
+
         }
         //initialize search form
         if (this.MilvusDataTypeMapping[field.dataType] === 'floatArray') {
@@ -291,15 +320,25 @@ export class AppComponent implements OnInit, OnChanges {
   // Handle form submission for deleting by properties
   onDeleteByPrimaryId() {
     if (this.deleteByIdForm.valid) {
-      const { fieldName, fieldValue } = this.deleteByIdForm.value;
+      const {fieldName, fieldValue} = this.deleteByIdForm.value;
       var expression = `"${fieldName}" = "${fieldValue}"`; // Build primary key expression
       this.deleteByPrimaryId(this.selectedCollectionName, expression);
     }
   }
 
+  onDeleteByQuery() {
+    if (this.deleteQuery && this.deleteQuery != "") {
+      this.milvusService.deleteDataByQuery(this.selectedCollectionName, this.deleteQuery).subscribe((res) => {
+        var deleteResult = res;
+      }, (error) => {
+        console.error('Error deleting data by properties:', error);
+      });
+    }
+  }
+
   onDeleteByPropertiesSubmit() {
     if (this.deleteByPropertiesForm.valid) {
-      const { fieldName, fieldValue } = this.deleteByPropertiesForm.value;
+      const {fieldName, fieldValue} = this.deleteByPropertiesForm.value;
       this.deleteDataByProperties(this.selectedCollectionName, fieldName, fieldValue);
     }
   }
@@ -316,6 +355,7 @@ export class AppComponent implements OnInit, OnChanges {
       }
     );
   }
+
   // Service call to delete data by properties
   deleteDataByProperties(collectionName: string, fieldName: string, fieldValue: string) {
     this.milvusService.deleteDataByProperties(collectionName, fieldName).subscribe(
@@ -424,49 +464,72 @@ export class AppComponent implements OnInit, OnChanges {
   }
 
   search() {
-      // Prepare the SearchRequest object
-      if (this.searchForm.valid) {
-        const {
-          outputFields,
+    // Prepare the SearchRequest object
+    if (this.searchForm.valid) {
+      const {
+        collectionName,
+        topK,
+        outputFields,
+        offset,
+        consistencyLevel,
+        primaryKey,
+        primaryKeyType,
+        vectorSearchRequest: {
           queryVector,
-          topK,
+          queryVectorField,
           similarityMetricType,
           nprobe,
           level,
           radius,
-          rangeFilter,
-          offset,
-          consistencyLevel,
-          queryVectorField
-        } = this.searchForm.value;
+          rangeFilter
+        }
+      } = this.searchForm.value;
 
+      if (queryVector != undefined) {
         // Prepare the SearchRequest object
-        this.searchRequestParams = {
-          collectionName: this.selectedCollectionData.collectionName, // Use the selected collection name
-          queryVector: this.parseQueryVector(queryVector), // Parse the query vector string into an array
-          topK: topK,
-          similarityMetricType: this.getSimilarityMetric(similarityMetricType),
-          outputFields: outputFields, // Add the selected search fields
-          queryVectorField: queryVectorField, // Fill the query vector field
-
-          // Optional fields
-          nprobe: nprobe || undefined, // If null, set to undefined
-          level: level || undefined, // If null, set to undefined
-          radius: radius || undefined, // If null, set to undefined
-          rangeFilter: rangeFilter || undefined, // If null, set to undefined
-          offset: offset || undefined, // If null, set to undefined
-          consistencyLevel: consistencyLevel || undefined // If null, set to undefined
-        };
-
-
-
-      // Call the search service method
-      this.milvusService.search(this.searchRequestParams).subscribe(result => {
-       this.searchResult = result;
-        // Handle the result as needed (e.g., display results)
-      }, error => {
-        console.error('Search failed:', error);
-      });
+        this.searchRequest = new SearchRequest(
+          this.selectedCollectionData.collectionName, // Use the selected collection name
+          topK, // Set topK
+          outputFields, // Add the selected search fields
+          primaryKey,
+          primaryKeyType,
+          new VectorSearchRequest(
+            this.parseQueryVector(queryVector), // Parse the query vector string into an array
+            queryVectorField, // Fill the query vector field
+            this.getSimilarityMetric(similarityMetricType), // Get the similarity metric
+            nprobe || undefined, // If null, set to undefined
+            level || undefined, // If null, set to undefined
+            radius || undefined, // If null, set to undefined
+            rangeFilter || undefined // If null, set to undefined
+          ),
+          offset || undefined, // If null, set to undefined
+          consistencyLevel || undefined // If null, set to undefined
+        );
+        // Call the search service method
+        this.milvusService.searchDataByParams(this.searchRequest).subscribe(result => {
+          this.searchResult = result;
+          // Handle the result as needed (e.g., display results)
+        }, error => {
+          console.error('Search failed:', error);
+        });
+      } else {
+        this.searchRequest = new SearchRequest(
+          this.selectedCollectionData.collectionName, // Use the selected collection name
+          topK, // Set topK
+          outputFields, // Add the selected search fields
+          primaryKey,
+          primaryKeyType,
+          undefined,
+          offset || undefined, // If null, set to undefined
+          consistencyLevel || undefined // If null, set to undefined
+        );
+        this.milvusService.searchData(this.searchRequest).subscribe((result) => {
+          this.searchResult = result;
+          // Handle the result as needed (e.g., display results)
+        }, error => {
+          console.error('Search failed:', error);
+        });
+      }
     } else {
       console.log('Form is invalid:', this.searchForm.errors);
     }
@@ -500,7 +563,7 @@ export class AppComponent implements OnInit, OnChanges {
 
   generateNormalizedArray(size: number): string {
     // Generate an array of random values between -1 and 1
-    const array = Array.from({ length: size }, () => Math.random() * 2 - 1);
+    const array = Array.from({length: size}, () => Math.random() * 2 - 1);
 
     // Calculate the L2 norm (Euclidean norm)
     const norm = Math.sqrt(array.reduce((sum, value) => sum + value * value, 0));
@@ -516,8 +579,7 @@ export class AppComponent implements OnInit, OnChanges {
     this.arrayField = this.generateNormalizedArray(512);
   }
 
-  getTotalData()
-  {
+  getTotalData() {
     this.milvusService.getTotalData(this.selectedCollectionName).subscribe((res) => {
         this.totalEntries = res;
       },
@@ -528,8 +590,8 @@ export class AppComponent implements OnInit, OnChanges {
   }
 
   onSubmit() {
-    if(this.form.valid) {
-      var data : InsertDataRequest[] = [];
+    if (this.form.valid) {
+      var data: InsertDataRequest[] = [];
       this.isInsertingData = true;
       console.log(this.form.value)
       this.insertDataRequest.fields = this.form.value['fields'];
@@ -553,6 +615,30 @@ export class AppComponent implements OnInit, OnChanges {
     this.guidId = id
   }
 
+  uploadFileData() {
+    this.isUploadingData = true;
+   this.milvusService.uploadData(this.selectedCollectionName, this.noOfEvents).subscribe((result) => {
+     this.isUploadingData = false
+     var res = result;
+   },
+     (error) => {
+       this.isUploadingData = false;
+     })
+
+  }
+
+  stopUpload() {
+    this.isUploadingData = true;
+   this.milvusService.stopUpload().subscribe((result) => {
+     this.isUploadingData = false
+     var res = result;
+   },
+     (error) => {
+       this.isUploadingData = false;
+     })
+
+  }
+
   setValue(control: AbstractControl<any>, target: any) {
     control.value
   }
@@ -562,7 +648,7 @@ export class AppComponent implements OnInit, OnChanges {
     this.showSchemaData = !this.showSchemaData;  // Toggle the visibility
   }
 
-  showSearchResult : boolean = false;  // Initially set to false to hide search result data
+  showSearchResult: boolean = false;  // Initially set to false to hide search result data
   toggleSearchData() {
     this.showSearchResult = !this.showSearchResult;  // Toggle the visibility
   }

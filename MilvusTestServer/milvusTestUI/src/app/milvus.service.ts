@@ -28,8 +28,12 @@ export class MilvusService {
     return this.http.get(`${this.apiUrl}/total-data?collectionName=${collectionName}`,  {});
   }
 
-  search(requestParams: SearchRequest): Observable<any> {
-    return this.http.post(`${this.apiUrl}/search`, requestParams); // Adjust the endpoint as needed
+  searchDataByParams(searchRequest: SearchRequest): Observable<any> {
+    return this.http.post(`${this.apiUrl}/searchDataByParams`, searchRequest); // Adjust the endpoint as needed
+  }
+
+  searchData(searchRequest: SearchRequest): Observable<any> {
+    return this.http.post(`${this.apiUrl}/searchData`, searchRequest); // Adjust the endpoint as needed
   }
 
   createIndex(params: IndexCreationParams): Observable<any> {
@@ -46,6 +50,9 @@ export class MilvusService {
 
   deleteDataByProperties(collectionName: string, expression : string): Observable<any> {
     return this.http.get(`${this.apiUrl}/deleteDataByProperties?collectionName=${collectionName}&expression=${expression}`, {});
+  }
+  deleteDataByQuery(collectionName: string, expression : string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/deleteDataByQuery?collectionName=${collectionName}&expression=${expression}`, {});
   }
   deleteAllData(collectionName: string, expression : string): Observable<any> {
     return this.http.get(`${this.apiUrl}/deleteAllData?collectionName=${collectionName}&expression=${expression}`, {});
@@ -64,6 +71,14 @@ export class MilvusService {
 
   describeCollection(collectionName : string): Observable<MilvusCollectionDataModel> {
     return this.http.get<MilvusCollectionDataModel>(`${this.apiUrl}/describe-collection?collectionName=${collectionName}`, {});
+  }
+
+  uploadData(collectionName : string, noOfEvents : number): Observable<MilvusCollectionDataModel> {
+    return this.http.get<MilvusCollectionDataModel>(`${this.apiUrl}/upload-Data?collectionName=${collectionName}&noOfEvents=${noOfEvents}`, {});
+  }
+
+  stopUpload(): Observable<MilvusCollectionDataModel> {
+    return this.http.get<MilvusCollectionDataModel>(`${this.apiUrl}/stop-upload`, {});
   }
 
   // Add a method to handle connection to Milvus

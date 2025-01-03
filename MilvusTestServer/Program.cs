@@ -13,6 +13,7 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+MilvusService.Init();
 
 // Configure the HTTP request pipeline.
 

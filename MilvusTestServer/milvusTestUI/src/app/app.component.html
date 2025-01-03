@@ -100,25 +100,8 @@
   <div *ngIf="isConnected && selectedCollectionName && selectedCollectionData" class="card create-collection-card">
 
     <h2>Search Collection</h2>
+    <h2>Search Collection</h2>
     <form [formGroup]="searchForm" (ngSubmit)="search()">
-      <div class="input-group">
-        <label for="queryVector">Query Vector:</label>
-        <input
-          id="queryVector"
-          formControlName="queryVector"
-          placeholder="Enter vector as comma-separated values"
-        />
-      </div>
-
-      <!-- Query Vector Field -->
-      <div class="input-group">
-        <label for="queryVectorField">Query Vector Field:</label>
-        <input
-          id="queryVectorField"
-          formControlName="queryVectorField"
-          placeholder="Enter query vector field"
-        />
-      </div>
 
       <!-- Top K -->
       <div class="input-group">
@@ -129,15 +112,8 @@
           formControlName="topK"
           min="1"
           placeholder="Number of results to return"
+          required
         />
-      </div>
-
-      <!-- Similarity Metric Type -->
-      <div class="input-group">
-        <label for="similarityMetricType">Similarity Metric Type:</label>
-        <select id="similarityMetricType" formControlName="similarityMetricType">
-          <option *ngFor="let metric of similarityMetrics" [value]="metric">{{ metric }}</option>
-        </select>
       </div>
 
       <!-- Output Fields (Multi-select) -->
@@ -151,53 +127,8 @@
           [filter]="true"
           [showToggleAll]="false"
           placeholder="Select fields"
+          required
         ></p-multiSelect>
-      </div>
-
-      <!-- Nprobe (Optional) -->
-      <div class="input-group">
-        <label for="nprobe">Nprobe (optional):</label>
-        <input
-          id="nprobe"
-          type="number"
-          formControlName="nprobe"
-          placeholder="Enter Nprobe"
-        />
-      </div>
-
-      <!-- Level (Optional) -->
-      <div class="input-group">
-        <label for="level">Level (optional):</label>
-        <input
-          id="level"
-          type="number"
-          formControlName="level"
-          min="1"
-          max="3"
-          placeholder="Enter level (1-3)"
-        />
-      </div>
-
-      <!-- Radius (Optional) -->
-      <div class="input-group">
-        <label for="radius">Radius (optional):</label>
-        <input
-          id="radius"
-          type="number"
-          formControlName="radius"
-          placeholder="Enter search radius"
-        />
-      </div>
-
-      <!-- Range Filter (Optional) -->
-      <div class="input-group">
-        <label for="rangeFilter">Range Filter (optional):</label>
-        <input
-          id="rangeFilter"
-          type="number"
-          formControlName="rangeFilter"
-          placeholder="Enter range filter"
-        />
       </div>
 
       <!-- Offset (Optional) -->
@@ -211,9 +142,88 @@
         />
       </div>
 
+      <!-- Vector Search Request -->
+      <div formGroupName="vectorSearchRequest" class="card">
+        <!-- Query Vector -->
+        <div class="input-group">
+          <label for="queryVector">Query Vector:</label>
+          <input
+            id="queryVector"
+            formControlName="queryVector"
+            placeholder="Enter vector as comma-separated values"
+          />
+        </div>
+
+        <!-- Query Vector Field -->
+        <div class="input-group">
+          <label for="queryVectorField">Query Vector Field:</label>
+          <input
+            id="queryVectorField"
+            formControlName="queryVectorField"
+            placeholder="Enter query vector field"
+          />
+        </div>
+
+        <!-- Similarity Metric Type -->
+        <div class="input-group">
+          <label for="similarityMetricType">Similarity Metric Type:</label>
+          <select id="similarityMetricType" formControlName="similarityMetricType">
+            <option *ngFor="let metric of similarityMetrics" [value]="metric">{{ metric }}</option>
+          </select>
+        </div>
+
+        <!-- Nprobe (Optional) -->
+        <div class="input-group">
+          <label for="nprobe">Nprobe (optional):</label>
+          <input
+            id="nprobe"
+            type="number"
+            formControlName="nprobe"
+            placeholder="Enter Nprobe"
+          />
+        </div>
+
+        <!-- Level (Optional) -->
+        <div class="input-group">
+          <label for="level">Level (optional):</label>
+          <input
+            id="level"
+            type="number"
+            formControlName="level"
+            min="1"
+            max="3"
+            placeholder="Enter level (1-3)"
+          />
+        </div>
+
+        <!-- Radius (Optional) -->
+        <div class="input-group">
+          <label for="radius">Radius (optional):</label>
+          <input
+            id="radius"
+            type="number"
+            formControlName="radius"
+            placeholder="Enter search radius"
+          />
+        </div>
+
+        <!-- Range Filter (Optional) -->
+        <div class="input-group">
+          <label for="rangeFilter">Range Filter (optional):</label>
+          <input
+            id="rangeFilter"
+            type="number"
+            formControlName="rangeFilter"
+            placeholder="Enter range filter"
+          />
+        </div>
+      </div>
+
       <!-- Submit Button -->
       <button type="submit" class="btn primary">Search</button>
+
     </form>
+
 
 
   </div>
@@ -327,7 +337,6 @@
 
   </div>
 
-  <!-- Delete Data -->
   <!--Delete Data -->
   <div *ngIf="selectedCollectionName && selectedCollectionData" class="action-cards">
     <!-- Delete by Properties Card -->
@@ -335,7 +344,7 @@
       <h2>Delete Data by Primary key</h2>
       <form [formGroup]="deleteByIdForm" (ngSubmit)="onDeleteByPrimaryId()">
         <div class="input-group">
-          <label for="deleteField">Primary key:</label>
+          <label>Primary key:</label>
           <h4>{{ deleteByIdForm.get('fieldName')?.value }}</h4>
         </div>
 
@@ -345,24 +354,33 @@
         <button type="submit" class="btn primary">Delete Data</button>
       </form>
     </div>
+    <!--    <div class="card">-->
+    <!--      <h2>Delete Data by Properties</h2>-->
+    <!--      <form [formGroup]="deleteByPropertiesForm" (ngSubmit)="onDeleteByPropertiesSubmit()">-->
+    <!--        <div class="input-group">-->
+    <!--          <label for="deleteField">Field to Match:</label>-->
+    <!--          <select id="deleteField" formControlName="fieldName">-->
+    <!--            <option *ngFor="let field of columns" [value]="field">{{ field }}</option>-->
+    <!--          </select>-->
+    <!--        </div>-->
+
+    <!--        <div class="input-group">-->
+    <!--          <label for="deleteValue">Value to Delete:</label>-->
+    <!--          <input type="text" id="deleteValue" formControlName="fieldValue" placeholder="Enter value to delete">-->
+    <!--        </div>-->
+    <!--        <button type="submit" class="btn primary">Delete Data by Properties</button>-->
+    <!--      </form>-->
+    <!--    </div>-->
+
     <div class="card">
-      <h2>Delete Data by Properties</h2>
-      <form [formGroup]="deleteByPropertiesForm" (ngSubmit)="onDeleteByPropertiesSubmit()">
-        <div class="input-group">
-          <label for="deleteField">Field to Match:</label>
-          <select id="deleteField" formControlName="fieldName">
-            <option *ngFor="let field of columns" [value]="field">{{ field }}</option>
-          </select>
-        </div>
+      <h2>Delete Data by Query</h2>
+      <div class="input-group">
+        <label>Query For Deletion:</label>
+        <input type="text" [(ngModel)]="deleteQuery" placeholder="Enter a query for deletion">
+      </div>
 
-        <div class="input-group">
-          <label for="deleteValue">Value to Delete:</label>
-          <input type="text" id="deleteValue" formControlName="fieldValue" placeholder="Enter value to delete">
-        </div>
-        <button type="submit" class="btn primary">Delete Data by Properties</button>
-      </form>
+      <button type="submit" class="btn primary" (click)="onDeleteByQuery()">Delete Data</button>
     </div>
-
     <!-- Full Data Deletion Card -->
     <div class="card">
       <h2>Delete All Data</h2>
@@ -420,6 +438,19 @@
 
         <button type="submit" class="btn primary">Insert Data</button>
       </form>
+    </div>
+    <div class="card">
+      <div>
+        <input type="number" [(ngModel)]="noOfEvents" min="-1" max="2000">
+        <button type="submit" class="btn primary" (click)="uploadFileData()" [disabled]="isUploadingData">
+          Upload File Data
+          <span *ngIf="isUploadingData" class="small-loader"></span>
+        </button>
+
+        <button *ngIf="isUploadingData" type="submit" class="btn danger" (click)="stopUpload()" >
+          Stop Upload
+        </button>
+      </div>
     </div>
   </div>
 

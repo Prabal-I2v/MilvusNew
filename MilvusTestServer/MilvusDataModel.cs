@@ -31,9 +31,8 @@ public class MilvusFieldDataModel
     public MilvusDataType DataType { get; set; }
     public bool isIndexed { get; set; } = false;
     public bool isPrimaryKey { get; set; } = false;
-    public SimilarityMetricType? SimilarityMetricType  { get; set; } = Milvus.Client.SimilarityMetricType.Invalid;
+    public SimilarityMetricType? SimilarityMetricType { get; set; } = Milvus.Client.SimilarityMetricType.Invalid;
     public IndexType? IndexType { get; set; } = Milvus.Client.IndexType.Invalid;
-
 }
 
 public class CreateIndexRequest
@@ -50,22 +49,14 @@ public class CreateIndexRequest
     public int? PQM { get; set; } // Optional for RHNSW_PQ
 }
 
-public class SearchRequest
+public class VectorSearchRequest
 {
-    /// <summary>
-    /// Name of the collection to search in.
-    /// </summary>
-    public string CollectionName { get; set; }
-
     /// <summary>
     /// The vector to use for the search query.
     /// </summary>
     public List<float> QueryVector { get; set; }
 
-    /// <summary>
-    /// Number of top results to return.
-    /// </summary>
-    public int TopK { get; set; }
+    public string queryVectorField { get; set; }
 
     /// <summary>
     /// Metric type used to measure similarity. Possible values: IP, L2, COSINE, JACCARD, HAMMING.
@@ -91,6 +82,35 @@ public class SearchRequest
     /// Inner boundary of the search space (optional).
     /// </summary>
     public float? RangeFilter { get; set; }
+}
+
+public class MilvusVectorSearchModel<T>
+{
+    // Fields
+    public string VectorFieldName { get; set; }
+    public IReadOnlyList<ReadOnlyMemory<T>> Vectors { get; set; }
+    public SimilarityMetricType MetricType { get; set; }
+    public int Limit { get; set; }
+    public SearchParameters? Parameters { get; set; }
+    public CancellationToken? CancellationToken { get; set; } = default(CancellationToken);
+
+    // Constructor to initialize the model
+}
+public class SearchRequest
+{
+    /// <summary>
+    /// Name of the collection to search in.
+    /// </summary>
+    public string CollectionName { get; set; }
+
+    /// <summary>
+    /// Number of top results to return.
+    /// </summary>
+    public int TopK { get; set; }
+
+    public string PrimaryKey { get; set; }
+
+    public MilvusDataType PrimaryKeyType { get; set; }
 
     /// <summary>
     /// Optional offset for pagination.
@@ -106,14 +126,19 @@ public class SearchRequest
     /// List of output fields to return from the search results.
     /// </summary>
     public List<string> OutputFields { get; set; }
-    
-    public string queryVectorField { get; set; }
+
+    public VectorSearchRequest? vectorSearchRequest { get; set; }
 
     public SearchRequest()
     {
-        QueryVector = new List<float>();
         OutputFields = new List<string>();
     }
+}
+
+public class FieldsDetails
+{
+    public string Name { get; set; }
+    public MilvusDataType Type { get; set; }
 }
 
 public class InsertDataRequest
@@ -128,4 +153,3 @@ public class InsertDataFieldData
     public dynamic Value { get; set; }
     public MilvusDataType DataType { get; set; }
 }
-

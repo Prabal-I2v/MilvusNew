@@ -4,6 +4,7 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Milvus.Client;
 using MilvusTestServer;
+using Newtonsoft.Json;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -15,7 +16,7 @@ public class milvusController : ControllerBase
     {
         _milvusService = milvusService;
     }
-    
+
     [HttpGet]
     public async Task<IActionResult> Get()
     {
@@ -23,12 +24,13 @@ public class milvusController : ControllerBase
         {
             return Ok();
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             Console.WriteLine(ex);
             return BadRequest(ex.Message);
         }
     }
+
     [HttpGet]
     [Route("create-collection")]
     public async Task<IActionResult> CreateCollection([FromQuery] string collectionName, [FromQuery] int dimension)
@@ -38,46 +40,64 @@ public class milvusController : ControllerBase
             var res = await _milvusService.CreateCollectionAsync(collectionName, dimension);
             return Ok(res);
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             Console.WriteLine(ex);
             return BadRequest(ex.Message);
         }
     }
-    
+
     [HttpPost]
     [Route("insert-data")]
-    public async Task<IActionResult> InsertData([FromQuery] string collectionName, [FromBody] List<InsertDataRequest> data)
+    public async Task<IActionResult> InsertData([FromQuery] string collectionName,
+        [FromBody] List<InsertDataRequest> data)
     {
         try
         {
             var res = await _milvusService.InsertDataAsync(collectionName, data);
             return Ok(res);
-
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             Console.WriteLine(ex);
             return BadRequest(ex.Message);
         }
     }
-    
+
     [HttpPost]
-    [Route("search")]
-    public async Task<IActionResult> Search([FromBody] SearchRequest searchRequestParams)
+    [Route("searchDataByParams")]
+    public async Task<IActionResult> SearchDataByParams(SearchRequest searchRequest)
     {
         try
         {
-            var res = await _milvusService.SearchAsync(searchRequestParams);
+            var res = await _milvusService.SearchByParams(searchRequest);
             return Ok(res);
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             Console.WriteLine(ex);
             return BadRequest(ex.Message);
         }
     }
-    
+
+    [HttpPost]
+    [Route("searchData")]
+    public async Task<IActionResult> SearchData(SearchRequest searchRequest)
+    {
+        try
+        {
+            var res = await _milvusService.SearchData(searchRequest);
+            // var data = ObjectDumper.Dump(res);
+            var data = JsonConvert.SerializeObject(res);
+            return Ok(data);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+            return BadRequest(ex.Message);
+        }
+    }
+
     [HttpPost]
     [Route("create-index")]
     public async Task<IActionResult> CreateIndex([FromBody] CreateIndexRequest request)
@@ -95,7 +115,7 @@ public class milvusController : ControllerBase
             return BadRequest(ex.Message);
         }
     }
-    
+
     [HttpGet]
     [Route("remove-index")]
     public async Task<IActionResult> RemoveIndex([FromQuery] string collectionName, [FromQuery] string columnName)
@@ -112,7 +132,7 @@ public class milvusController : ControllerBase
         }
     }
 
-    
+
     [HttpGet]
     [Route("load-collection")]
     public async Task<IActionResult> LoadCollection([FromQuery] string collectionName)
@@ -121,15 +141,14 @@ public class milvusController : ControllerBase
         {
             var res = await _milvusService.LoadCollectionAsync(collectionName);
             return Ok(res);
-
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             Console.WriteLine(ex);
             return BadRequest(ex.Message);
         }
     }
-    
+
     [HttpGet]
     [Route("total-data")]
     public async Task<IActionResult> GetTotalData([FromQuery] string collectionName)
@@ -138,15 +157,48 @@ public class milvusController : ControllerBase
         {
             var res = await _milvusService.GetTotalData(collectionName);
             return Ok(res);
-
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             Console.WriteLine(ex);
             return BadRequest(ex.Message);
         }
     }
     
+    [HttpGet]
+    [Route("upload-data")]
+    public async Task<IActionResult> UploadData([FromQuery] string collectionName, int noOfEvents)
+    {
+        try
+        {
+            await _milvusService.UploadData(collectionName, noOfEvents);
+            return Ok();
+            
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+            return BadRequest(ex.Message);
+        }
+    }
+    
+    [HttpGet]
+    [Route("stop-upload")]
+    public async Task<IActionResult> stopUpload()
+    {
+        try
+        {
+            await _milvusService.StopUploadData();
+            return Ok();
+            
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+            return BadRequest(ex.Message);
+        }
+    }
+
     [HttpGet]
     [Route("release-collection")]
     public async Task<IActionResult> ReleaseCollection([FromQuery] string collectionName)
@@ -155,15 +207,14 @@ public class milvusController : ControllerBase
         {
             var res = await _milvusService.ReleaseCollectionAsync(collectionName);
             return Ok(res);
-
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             Console.WriteLine(ex);
             return BadRequest(ex.Message);
         }
     }
-    
+
     [HttpGet]
     [Route("describe-collection")]
     public async Task<IActionResult> DescribeCollectionAsync([FromQuery] string collectionName)
@@ -173,45 +224,47 @@ public class milvusController : ControllerBase
             var res = await _milvusService.DescribeCollectionAsync(collectionName);
             return Ok(res);
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             Console.WriteLine(ex);
             return BadRequest(ex.Message);
         }
     }
-    
+
     [HttpGet]
     [Route("deleteDataByProperties")]
-    public async Task<IActionResult> DeleteDataByProperties([FromQuery] string collectionName, [FromQuery] string expression)
+    public async Task<IActionResult> DeleteDataByProperties([FromQuery] string collectionName,
+        [FromQuery] string expression)
     {
         try
         {
             var res = await _milvusService.DeleteDataByProperties(collectionName, expression);
             return Ok(res);
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             Console.WriteLine(ex);
             return BadRequest(ex.Message);
         }
     }
-    
+
     [HttpGet]
     [Route("deleteDataByPrimaryId")]
-    public async Task<IActionResult> DeleteDataByPrimaryId([FromQuery] string collectionName, [FromQuery] string expression)
+    public async Task<IActionResult> DeleteDataByPrimaryId([FromQuery] string collectionName,
+        [FromQuery] string expression)
     {
         try
         {
             var res = await _milvusService.DeleteDataByPrimaryId(collectionName, expression);
             return Ok(res);
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             Console.WriteLine(ex);
             return BadRequest(ex.Message);
         }
     }
-    
+
     [HttpGet]
     [Route("deleteAllData")]
     public async Task<IActionResult> DeleteAllData([FromQuery] string collectionName, [FromQuery] string expression)
@@ -219,15 +272,16 @@ public class milvusController : ControllerBase
         try
         {
             var res = await _milvusService.DeleteAllData(collectionName, expression);
+
             return Ok(res);
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             Console.WriteLine(ex);
             return BadRequest(ex.Message);
         }
     }
-    
+
     [HttpGet]
     [Route("getAllCollections")]
     public async Task<IActionResult> GetCollectionsAsync()
@@ -237,13 +291,14 @@ public class milvusController : ControllerBase
             var res = await _milvusService.GetCollectionsAsync();
             return Ok(res);
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             Console.WriteLine(ex);
             return BadRequest(ex.Message);
         }
     }
-    
+
+
     [HttpGet]
     [Route("connect")]
     public async Task<IActionResult> ConnectToMilvus(string ip, int port)
@@ -257,7 +312,7 @@ public class milvusController : ControllerBase
             }
             else
             {
-                return BadRequest(new {success = false, message = "Connection failed" });
+                return BadRequest(new { success = false, message = "Connection failed" });
             }
         }
         catch (Exception ex)
